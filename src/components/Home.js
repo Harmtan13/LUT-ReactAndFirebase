@@ -1,0 +1,12 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+export default function home() {
+  return (
+    <>
+      <h1>Quiz app</h1>
+      <Link to='/game' className='btn'>Start Game</Link>
+      <Link to='/highScores' className='btn'>High Scores</Link>
+    </>
+  )
+}
