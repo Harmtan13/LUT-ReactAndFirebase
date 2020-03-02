@@ -2,7 +2,7 @@ const loadQuestions = async(
   amount = 10, 
   category = 9, 
   difficulty = 'easy', 
-  type ='multiple'
+  type = 'multiple'
   ) => {
   const url = `https://opentdb.com/api.php?amount=${amount}&category=${category}&difficulty=${difficulty}&type=${type}`;
     
