@@ -2,16 +2,19 @@ import React, { Component } from 'react';
 import Question from './Question'
 import loadQuestions from './../helpers/QuestionsHelpper';
 import HUD from './HUD';
+import SaveScoreForm from './SaveScoreForm';
 
 export default class Game extends Component {
   constructor(props) {
     super(props);
+    console.log(process.env.REACT_APP_DATABASE_URL);
     this.state = {
       questions: null,
       currentQuestion: null,
       loading: true,
       score: 0,
-      questionNumber: 0
+      questionNumber: 0,
+      done: false
     }
   }
 
@@ -30,6 +33,13 @@ export default class Game extends Component {
   }
 
   changeQuestion = (bonus = 0) => {
+    if(this.state.questions.length === 0) { 
+      return this.setState((prevState) => ({
+        done: true,
+        score: prevState.score + bonus
+      }))
+    }
+
     const randomQuestionIndex = Math.floor(Math.random() * this.state.questions.length);
     const currentQuestion = this.state.questions[randomQuestionIndex];
     const remainingQuestions = [...this.state.questions];
@@ -46,13 +56,14 @@ export default class Game extends Component {
   }
 
   render() {
+    const {loading, done, score, currentQuestion, questionNumber} = this.state;
     return (
       <>
-      {this.state.loading && <div id="loader"></div>}
+      {loading && !done && <div id="loader"></div>}
 
-      {!this.state.loading && this.state.currentQuestion &&
+      {!loading && !done && currentQuestion &&
         <>  
-          <HUD score={this.state.score} questionNumber={this.state.questionNumber}/>
+          <HUD score={score} questionNumber={questionNumber}/>
 
           <Question 
             question={this.state.currentQuestion} 
@@ -60,8 +71,8 @@ export default class Game extends Component {
           />
         </>
         }
-        </>
-
+        {done && <SaveScoreForm score={score}/>}
+      </>
     )
   }
 }
