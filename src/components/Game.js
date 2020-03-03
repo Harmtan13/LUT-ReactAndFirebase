@@ -1,62 +1,53 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Question from './Question'
 import loadQuestions from './../helpers/QuestionsHelpper';
 import HUD from './HUD';
 import SaveScoreForm from './SaveScoreForm';
 
-export default class Game extends Component {
-  constructor(props) {
-    super(props);
-    console.log(process.env.REACT_APP_DATABASE_URL);
-    this.state = {
-      questions: null,
-      currentQuestion: null,
-      loading: true,
-      score: 0,
-      questionNumber: 0,
-      done: false
-    }
+export default function Game({history}) {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [score, setScore] = useState(0);
+  const [questionNumber, setQuestionNumber] = useState(0);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    loadQuestions()
+    .then(setQuestions)
+    .catch(console.error)
+  }, []);
+
+  const scoreSaved = () => {
+    history.push('/');
   }
 
-  async componentDidMount() {
-    try {
-      const questions = await loadQuestions();
-
-      this.setState({
-        questions
-      }, () => {
-        this.changeQuestion();
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  changeQuestion = (bonus = 0) => {
-    if(this.state.questions.length === 0) { 
-      return this.setState((prevState) => ({
-        done: true,
-        score: prevState.score + bonus
-      }))
+  const changeQuestion = useCallback((bonus = 0) => {
+    if(questions.length === 0) {
+      setDone(true);
+      return setScore(score + bonus);
     }
 
-    const randomQuestionIndex = Math.floor(Math.random() * this.state.questions.length);
-    const currentQuestion = this.state.questions[randomQuestionIndex];
-    const remainingQuestions = [...this.state.questions];
+    const randomQuestionIndex = Math.floor(Math.random() * questions.length);
+    const currentQuestion = questions[randomQuestionIndex];
+    const remainingQuestions = [...questions];
 
     remainingQuestions.splice(randomQuestionIndex, 1);
 
-    this.setState((prevState) => ({
-      questions: remainingQuestions, 
-      currentQuestion, 
-      loading: false,
-      score: prevState.score += bonus,
-      questionNumber: prevState.questionNumber += 1
-    }));
-  }
+    setQuestions(remainingQuestions);
+    setCurrentQuestion(currentQuestion);
+    setLoading(false);
+    setScore(score + bonus);
+    setQuestionNumber(questionNumber + 1)
+  }, [score, questionNumber, questions, setQuestions, setLoading, setCurrentQuestion, setQuestionNumber]);
 
-  render() {
-    const {loading, done, score, currentQuestion, questionNumber} = this.state;
+  useEffect(() => {
+    if(!currentQuestion && questions.length) {
+      changeQuestion();
+    }
+  }, [currentQuestion, questions, changeQuestion]);
+
+
     return (
       <>
       {loading && !done && <div id="loader"></div>}
@@ -66,13 +57,12 @@ export default class Game extends Component {
           <HUD score={score} questionNumber={questionNumber}/>
 
           <Question 
-            question={this.state.currentQuestion} 
-            changeQuestion={this.changeQuestion}
+            question={currentQuestion} 
+            changeQuestion={changeQuestion}
           />
         </>
         }
-        {done && <SaveScoreForm score={score}/>}
+        {done && <SaveScoreForm score={score} scoreSaved={scoreSaved}/>}
       </>
     )
   }
-}
